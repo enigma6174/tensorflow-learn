@@ -9,11 +9,11 @@ from collections import Counter
 from tensorflow.io import read_file
 from tensorflow.image import decode_image, resize
 
-def get_dir():
+def get_dir(dataset):
     '''
     Return the current working directory
     '''
-    directory = Path.cwd()/'data'
+    directory = Path.cwd()/'data'/dataset
     return directory
 
 def tree(_dir, filetype):
@@ -83,18 +83,31 @@ def clean_data(_dir):
     '''
     Removes image files that cannot be opened or have been corrupted
     '''
-    for image in sorted(_dir.glob('*')):
+    try:
         try:
-            img = read_file(str(image))
-            img = decode_image(img)
-
-            if img.ndim != 3:
-                print(f"[FILE_CORRUPT] {str(image).split('/')[-1]} DELETED")
-                image.unlink()
-
+            for item in (_dir.glob('*')):
+                folder_name = str(item).split('/')[-1]
+                if folder_name == '.DS_Store':
+                    print(f'[HIDDEN_DIR] DELETING UNWANTED DIRECTORY\n{item}')
+                    item.unlink()
         except Exception as e:
-            print(f"[ERR] {str(image).split('/')[-1]}: {e} DELETED")
-            image.unlink()
+            print(f'[ERR] ERROR IN DIR: {e}')
+
+        else:
+            for image in sorted(_dir.glob('*')):
+                try:
+                    img = read_file(str(image))
+                    img = decode_image(img)
+
+                    if img.ndim != 3:
+                        print(f"[FILE_CORRUPT] {str(image).split('/')[-1]} DELETED")
+                        image.unlink()
+
+                except Exception as e:
+                    print(f"[ERR] {str(image).split('/')[-1]}: {e} DELETED")
+                    image.unlink()
+    except Exception as e:
+        print(f'[ERR] UNEXPECTED ERROR OCCURRED: {e}')
             
 def process_image(file, img_shape=224):
     '''
